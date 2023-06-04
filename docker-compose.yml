@@ -1,0 +1,68 @@
+version: "3.9" 
+
+services:
+  postgres:
+    image: postgres:15.2  
+    environment:
+      - POSTGRES_HOST=localhost
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=3766
+      - POSTGRES_DB=Account_manager
+    ports:
+      - "5432:5432"
+    networks:
+      - shared-network
+    volumes:
+      - ./postgres-db:/var/lib/postgresql/data
+    
+  Backend:
+    container_name: account_manager_api
+    restart: unless-stopped
+    image: account-manager-api-prod:1.0.0
+    build: ./Backend
+    ports:
+      - 8081:8081
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+      - ./Backend:/app:/controllers
+      - ./Backend:/app:/documents
+    networks:
+      - shared-network
+    environment:
+       DATABASE_URL: postgres://postgres:3766@db:5432/Account_manager
+       PSQL_HOST: postgres
+    depends_on:
+      - postgres
+
+
+  frontend:
+    container_name: account_manager_client
+    restart: unless-stopped
+    image: account-manager-client-prod:1.0.0
+    build: ./frontend
+    volumes:
+      - ./frontend:/src
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    ports:
+      - 3000:3000
+    networks:
+      - shared-network
+    depends_on:
+      - Backend
+
+    
+  pg-admin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=keyurnagar9453@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=3766
+      - PGADMIN_LISTEN_PORT=5050
+    ports:
+      - "5050:5050"
+      
+
+networks:
+  shared-network:
