@@ -4,7 +4,13 @@ import Cookie from 'js-cookie';
 import authHeader from './authHeader';
 
 
-const API_BASE_URL = 'http://127.0.0.1:8081';
+// const API_BASE_URL = 'http://127.0.0.1:8081';
+// const API_BASE_URL = process.env.REACT_APP_API_URL; 
+
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "/"
+    : "http://127.0.0.1:8081";
 
 export default {
   FetchCustomer: async function () {

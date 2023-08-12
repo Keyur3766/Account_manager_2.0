@@ -1,11 +1,11 @@
 // Confuguration of the Database
-
+require("dotenv").config();
 // Development
 module.exports = {
-    HOST: "localhost",
-    USER: "postgres",
-    PASSWORD: "3766",
-    DB: "Account_manager",
+    HOST: process.env.PGHOST,
+    USER: process.env.PGUSER,
+    PASSWORD: process.env.PGPASSWORD,
+    DB: process.env.PGDATABASE,
     dialect: "postgres",
     pool: {
         max: 5,

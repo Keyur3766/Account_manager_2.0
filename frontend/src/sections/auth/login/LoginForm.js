@@ -11,6 +11,7 @@ import UserServices from '../../../services/UserServices';
 // ----------------------------------------------------------------------
 
 export default function LoginForm() {
+  console.log(process.env.REACT_APP_API_URL);
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
