@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { replace } from 'lodash';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
@@ -35,10 +34,9 @@ export default function AccountPopover() {
     setOpen(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleLogOut = () => {
     try{
-      const response = UserServices.RemoveToken().then((res)=>{
-        console.log(res);
+      UserServices.RemoveToken().then(()=>{
         navigate('/login', {replace:true});
       });
     }
@@ -47,6 +45,10 @@ export default function AccountPopover() {
     }
     setOpen(null);
   };
+
+  const handleClose = () => {
+    setOpen(null);
+  }
 
   return (
     <>
@@ -110,7 +112,7 @@ export default function AccountPopover() {
 
         <Divider sx={{ borderStyle: 'dashed' }} />
 
-        <MenuItem onClick={handleClose} sx={{ m: 1 }}>
+        <MenuItem onClick={handleLogOut} sx={{ m: 1 }}>
           Logout
         </MenuItem>
       </Popover>
