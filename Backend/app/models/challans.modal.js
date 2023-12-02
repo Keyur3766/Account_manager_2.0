@@ -25,7 +25,7 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATEONLY,
         allowNull: false,
         defaultValue: Sequelize.NOW
-      },
+      }
     });
   
     return Challans;

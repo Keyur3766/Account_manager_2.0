@@ -19,7 +19,6 @@ const Challans = db.challans;
 // Get pending challan count
 exports.findAndGetChallans = async(req,res)=>{
     const id = req.params.id;
-    console.warn(id);
     const data = await Challans.count({
         attributes: [
             'customer_id', 'issue_date',[Sequelize.fn('COUNT', 'challan_id'), 'count']
@@ -70,7 +69,7 @@ exports.addChallan = async(req,res) => {
         item_id,
         quantity,
     } = req.body;
-
+   
     const challan = {
         customer_id: req.body.customer_id,
         item_id: req.body.item_id,
@@ -94,7 +93,10 @@ exports.UpdateChallan = async(req,res) => {
     const id = req.params.id;
     console.warn(id);
     
-    Challans.update({payment_status: true}, {where: {customer_id: id}})
+    Challans.update(
+        {payment_status: true}, 
+        {where: {customer_id: id}}
+    )
     .then(numAffectedRows => {
         res.status(200).send(`Updated ${numAffectedRows} row(s)`);
     })

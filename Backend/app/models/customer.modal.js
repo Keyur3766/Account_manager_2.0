@@ -24,7 +24,7 @@ module.exports = (sequelize, Sequelize) => {
       Mobile: {
         type: Sequelize.BIGINT,
         allowNull: false,
-      },
+      }
     });
   
     return Customer;
