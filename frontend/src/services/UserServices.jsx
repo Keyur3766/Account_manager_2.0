@@ -93,7 +93,6 @@ export default {
     }
   },
   FetchItems: async function(){
-    
     try{
       const response = await axios.get(`${API_BASE_URL}/api/items/getItems`,
       {
@@ -236,7 +235,7 @@ export default {
     try{
       const response = await axios.post(
         `${API_BASE_URL}/api/login/generateToken`, {
-          username: email,
+          email: email,
           password: password
         }
       );
