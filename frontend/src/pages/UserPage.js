@@ -111,22 +111,22 @@ export default function UserPage() {
     await UserServices.FetchCustomer().then((res)=>{
       setData(res.data);
       
-      res.data.map(d => {
-        return (
+      // res.data.map(d => {
+      //   return (
           
-          UserServices.Get_ChallanCountById(d.id).then((res) => {
+      //     UserServices.Get_ChallanCountById(d.id).then((res) => {
 
-            const resdata = res.data;
-            setPendingChallans([
-              ...pendingchallans,
-              {id: d.id, pending: resdata}
-            ])
+      //       const resdata = res.data;
+      //       setPendingChallans([
+      //         ...pendingchallans,
+      //         {id: d.id, pending: resdata}
+      //       ])
     
-            console.log(resdata); 
+      //       console.log(resdata); 
           
-          })
-        );
-      });
+      //     })
+      //   );
+      // });
     });
   };
   // const PENDINGCHALLANDATA = Array.from(pendingchallans);
@@ -135,13 +135,13 @@ export default function UserPage() {
 
   
 
-  const mergeStates = () => {
-    const mergedState = data.map(obj1 => {
-      const obj2 = pendingchallans.find(obj2 => obj2.id === obj1.id);
-      return obj2 ?{ ...obj1, ...obj2 }:obj1;
-    });
-    setData(mergedState);
-  };
+  // const mergeStates = () => {
+  //   const mergedState = data.map(obj1 => {
+  //     const obj2 = pendingchallans.find(obj2 => obj2.id === obj1.id);
+  //     return obj2 ?{ ...obj1, ...obj2 }:obj1;
+  //   });
+  //   setData(mergedState);
+  // };
 
 useEffect(() => {
   const fetchData = async () => {
@@ -160,12 +160,11 @@ useEffect(() => {
       }
       setData(res.data)
   
-      const promises = res.data.map((entry) => UserServices.Get_ChallanCountById(entry.id).then((res)=>{
-        const newPendingChallan = { id: entry.id, pending: res.data };
-        setPendingChallans((prevPendingChallans) => [...prevPendingChallans, newPendingChallan]);
-  
-      }));
-      await Promise.all(promises); // wait for all promises to resolve
+      // const promises = res.data.map((entry) => UserServices.Get_ChallanCountById(entry.id).then((res)=>{
+      //   const newPendingChallan = { id: entry.id, pending: res.data };
+      //   setPendingChallans((prevPendingChallans) => [...prevPendingChallans, newPendingChallan]);
+      // }));
+      // await Promise.all(promises); // wait for all promises to resolve
     }
     catch(error){
         navigate('/404');
@@ -176,9 +175,9 @@ useEffect(() => {
   fetchData();
 }, []);
 
-useEffect(() => {
-  mergeStates();
-}, [pendingchallans]);
+// useEffect(() => {
+//   mergeStates();
+// }, [pendingchallans]);
 
 
 
