@@ -1,7 +1,7 @@
 //Used for validation in Node.js
 const Joi = require("joi");
 const path = require("path");
-
+const Product = require("../models/items.modal");
 const db = require("../models");
 const fs = require("fs");
 
@@ -11,26 +11,19 @@ const Item = db.items;
 exports.getItems = async (req, res) => {
   try {
     // console.log("From API:");
-    const items = await Item.findAll({order: [
-      ['total_stocks', 'DESC'],
-    ]})
-      .then((items) => {
-        items.map((i) => {
-          const itemimage = i.imageData.toString("base64");
-          i["imageData"] = itemimage;
-        });
-        return items;
-      })
-      .then((items) => {
-        return res.status(200).send(items);
-      });
+    const items = await Product.find({}).sort({ total_stocks: -1 }).exec();
+
+    items.map((i) => {
+      const itemimage = i.image.imageData.toString("base64");
+      i["imageData"] = itemimage;
+    });
+    return res.status(200).json(items);
+    
   } catch (error) {
+    console.log(error);
     return res.status(500).send(error.mesage);
   }
 };
-
-
-
 
 // Get ItemName by Id
 exports.getItemById = async (req,res) => {
@@ -95,8 +88,6 @@ exports.UpdateStockOUTs = async(req,res) => {
   }
 }
 
-
-
 //Get Item Image
 exports.getItemImage = async (req, res) => {
   const { filename } = req.params;
@@ -111,57 +102,25 @@ exports.getItemImage = async (req, res) => {
 //Post Request Item
 exports.addItems = async (req, res) => {
   try {
-    console.log(req.file);
-
     if (req.file == undefined) {
       return res.send("You must select a file");
     }
 
-    const Name = req.body.Name;
+    const name = req.body.Name;
+    const productObject = new Product(req.body);
 
-    Item.findOne({ where: { Name: Name } }).then((data) => {
-      if (data) {
-        res.status(456).send({
-          message: "Product with same Name already exist",
-        });
-        res.end();
-        return;
-      }
-      const my_item = {
-        Name: req.body.Name,
-        purchase_price: req.body.purchase_price,
-        selling_price: req.body.selling_price,
-        item_color: req.body.item_color,
-        total_stocks: req.body.total_stocks,
+    productObject.image.imageData = fs.readFileSync(
+      __basedir + req.body.image.imagePath
+    );
 
-        //For images
-        imageType: req.file.mimetype,
-        imageName: req.file.originalname,
-        imageData: fs.readFileSync(
-          __basedir + "/resources/static/assets/uploads/" + req.file.filename
-        ),
-      };
+    const resProduct = await productObject.save();
 
-      Item.create(my_item)
-        .then((image) => {
-          // console.log(image);
-          fs.writeFileSync(
-            __basedir + "/resources/static/assets/temps/" + image.imageName,
-            image.imageData
-          );
-
-          return res.send(`File has been uploaded.`);
-        })
-        .catch((err) => {
-          res.status(500).send({
-            message:
-              err.message || "some error occured while creating the Item",
-          });
-        });
-    });
+    res.status(200).send(resProduct)
   } catch (error) {
-    console.log(error);
-    return res.send(`Error when trying upload images: ${error}`);
+    return res.status(500).send({
+      message:
+      error.message || "some error occured while creating the customer",
+    });
   }
 };
 
