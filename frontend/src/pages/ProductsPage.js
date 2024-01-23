@@ -29,19 +29,14 @@ export default function ProductsPage() {
   const [data, setData] = useState("");
   const getItemsData = async() => {
     UserServices.FetchItems().then((res)=>{
-      console.warn(res);
       if(res.status===401){
         navigate('/404');
       }
-      
       setData(res.data);
     });
   };
   
   const PRODUCTDATA = Array.from(data);
-  console.log(typeof(PRODUCTDATA));
-  // console.log(PRODUCTDATA);
-
 
   useEffect(()=>{
     getItemsData();

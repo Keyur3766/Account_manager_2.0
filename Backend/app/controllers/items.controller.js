@@ -11,14 +11,12 @@ const Item = db.items;
 exports.getItems = async (req, res) => {
   try {
     // console.log("From API:");
-    const items = await Product.find({}).sort({ total_stocks: -1 }).exec();
-
-    items.map((i) => {
+    const items = await Product.find({}).lean().sort({ total_stocks: -1 }).exec();
+    const updatedItems = items.map((i) => {
       const itemimage = i.image.imageData.toString("base64");
-      i["imageData"] = itemimage;
+      return { ...i, image: { ...i.image, imageData: itemimage } };
     });
-    return res.status(200).json(items);
-    
+    return res.status(200).json(updatedItems);
   } catch (error) {
     console.log(error);
     return res.status(500).send(error.mesage);
@@ -30,7 +28,7 @@ exports.getItemById = async (req,res) => {
   const itemId = req.params.item_id;
   try {
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
+    const item = await Product.findOne({_id: itemId});
 
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
@@ -57,12 +55,13 @@ exports.UpdateStockIns = async(req,res) => {
   const quant = req.body.quantity;
   try{
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
-    item.total_stocks += parseInt(quant,10);
+    const item = await Product.findOneAndUpdate(
+      {_id: itemId},
+      {$inc: { total_stocks: parseInt(quant,10) } },
+      { new: true }
+    );
 
-    await item.save();
-
-    res.status(200).send("stock added successfully");
+    res.status(200).json({data: item, message: "stock added successfully"});
   }
   catch(err){
     return res.status(500).send(err.mesage);
@@ -76,12 +75,13 @@ exports.UpdateStockOUTs = async(req,res) => {
   const quant = req.body.quantity;
   try{
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
-    item.total_stocks -= parseInt(quant,10);
+    const item = await Product.findOneAndUpdate(
+      {_id: itemId},
+      {$inc: { total_stocks: parseInt(-quant,10) } },
+      { new: true }
+    );
 
-    await item.save();
-
-    res.status(200).send("stock deleted successfully");
+    res.status(200).json({data: item, message: "stock deleted successfully"});
   }
   catch(err){
     return res.status(500).send(err.mesage);
@@ -124,25 +124,25 @@ exports.addItems = async (req, res) => {
   }
 };
 
-exports.Delete_Item = (req, res) => {
-const id = req.params.id;
+exports.Delete_Item = async(req, res) => {
+  const id = req.params.id;
 
-  Item.destroy({
-    where: { id: id },
-  })
-  .then((num) => {
-    if (num == 1) {
-      res.send({
-        message: "Item was deleted successfully!",
-      });
-    } else {
-      res.send({
-        message: `Cannot delete Item with id=${id}. Maybe Item was not found!`,
+  try{
+    const response  = await Product.deleteOne({_id: id});
+
+    if(response.deletedCount == 1){
+      res.status(200).send({
+        message: "Product deleted successfully!",
       });
     }
-  })
-  .catch((err) => {
-    res.status(500).send({
-      message: "Could not delete Item with id=" + id,
-    });
-})};
+    else{
+      res.status(500).send({
+        message: `Cannot delete Product with id=${id}. Maybe Product was not found!`,
+      });
+    }
+  }
+  catch(error){
+    res.status(500).send(err.message);
+  }
+  
+};
