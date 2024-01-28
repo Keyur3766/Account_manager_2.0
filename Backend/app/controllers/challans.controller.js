@@ -4,7 +4,8 @@ const pdf = require('html-pdf');
 const pdfTemplate = require("../documents/index");
 const db = require("../models");
 const Sequelize = require('sequelize');
-
+const Challan = require("../models/challans.modal");
+const mongoose = require("mongoose");
 
 const Challans = db.challans;
 
@@ -18,92 +19,205 @@ const Challans = db.challans;
 
 // Get pending challan count
 exports.findAndGetChallans = async(req,res)=>{
-    const id = req.params.id;
-    const data = await Challans.count({
-        attributes: [
-            'customer_id', 'issue_date',[Sequelize.fn('COUNT', 'challan_id'), 'count']
-        ],
-        where: {
-            payment_status:'false',
-            customer_id: id
-        },
-        group: ['customer_id','issue_date']
-    });
+    let id = new mongoose.Types.ObjectId(req.params.id);
+    // const data = await Challans.count({
+    //     attributes: [
+    //         'customer_id', 'issue_date',[Sequelize.fn('COUNT', 'challan_id'), 'count']
+    //     ],
+    //     where: {
+    //         payment_status:'false',
+    //         customer_id: id
+    //     },
+    //     group: ['customer_id','issue_date']
+    // });
 
-    const size = Object.keys(data).length;
+    // const size = Object.keys(data).length;
     
-    res.status(200).send(size.toString());
+    // res.status(200).send(size.toString());
+    try{
+        const challans = await Challan.aggregate([
+            {
+                $match: {
+                    payment_status: false,
+                    customer_id: id
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        customer_id: '$customer_id',
+                        issue_date: '$issue_date'
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0, // Exclude the default _id field from the result
+                    customer_id: '$_id.customer_id',
+                    issue_date: '$_id.issue_date',
+                    count: 1
+                }
+            }
+        ]);
+
+        const size = Object.keys(challans).length;
+
+        res.status(200).send(size.toString());
+    }
+    catch(err){
+        console.log(err.message);
+        res.status(500).json({ message: `Failed to fetch challans` });
+    }
+    
 }
 
 // Get all the details related to challan for particular customer
 exports.findAndGetChallanDetails = async(req,res)=>{
-    const id = req.params.id;
-    console.warn(id);
-    const data = await Challans.findAll({
-        attributes: ["customer_id","issue_date", [Sequelize.fn('SUM', Sequelize.col('quantity')), 'totalQuantity']],
-        where: {
-            payment_status:'false',
-            customer_id: id
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    // const data = await Challans.findAll({
+    //     attributes: ["customer_id","issue_date", [Sequelize.fn('SUM', Sequelize.col('quantity')), 'totalQuantity']],
+    //     where: {
+    //         payment_status:'false',
+    //         customer_id: id
+    //     },
+    //     include: [
+    //         {
+    //             model: db.items,
+    //             attributes: ["id","Name","selling_price"]
+    //         }  
+    //     ],
+    //     group: ['issue_date','customer_id','item.id'],
+    //     order: [
+    //         ['issue_date', 'ASC']
+    //     ]
+    // });
+
+
+
+    // Sample Output
+    // {
+    //     "_id": "2024/1/27",
+    //     "itemList": [
+    //         {
+    //             "totalQuantity": 130,
+    //             "item_id": "65ad438af07c7f3e3d008c25",
+    //             "customer_id": "65ad438af07c7f3e3d008c25",
+    //             "item_Name": "Item4",
+    //             "item_selling_price": 20
+    //         }
+    //     ],
+    //     "totalSales": 20,
+    //     "customer_id": "65ad438af07c7f3e3d008c25"
+    // },
+    const challanDetails = await Challan.aggregate([
+        {
+            $match : {
+                payment_status: false,
+                customer_id: id
+            }
         },
-        include: [
-            {
-                model: db.items,
-                attributes: ["id","Name","selling_price"]
-            }  
-        ],
-        group: ['issue_date','customer_id','item.id'],
-        order: [
-            ['issue_date', 'ASC']
-        ]
-    });
-    res.status(200).send(data);
+        {   
+            $group: {
+                _id: {
+                    issue_date: '$issue_date',
+                    customer_id: '$customer_id',
+                    item_id: '$item_id'
+                },
+                totalQuantity: { $sum: '$quantity' }
+            }
+        },
+        {
+            $lookup: {
+                from: 'items', // Assuming the collection name is 'items'
+                localField: '_id.item_id',
+                foreignField: '_id',
+                as: 'items'
+            }
+        },
+        {
+            $unwind: '$items'
+        },
+        {
+            $project: {
+                _id: 0,
+                customer_id: '$_id.customer_id',
+                issue_date: '$_id.issue_date',
+                totalQuantity: 1,
+                item_id: '$items._id',
+                item_Name: '$items.Name',
+                item_selling_price: '$items.selling_price'
+            }
+        },
+        {
+            $group: {
+                _id: '$issue_date',
+                
+                itemList: {
+                    $push: {
+                        totalQuantity: '$totalQuantity',
+                        item_id: '$item_id',
+                        customer_id: '$customer_id',
+                        item_Name: '$item_Name',
+                        item_selling_price: '$item_selling_price'
+                    }
+                },
+                totalSales: { $sum: '$item_selling_price' },
+                customer_id: { $first: '$customer_id' }
+            }
+        },
+        {
+            $sort: {
+                issue_date: 1
+            }
+        }
+    ]);
+    res.status(200).send(challanDetails);
 }
 
 
 
 //Post Request challan
 exports.addChallan = async(req,res) => {
-    
-    const{
-        customer_id,
-        item_id,
-        quantity,
-    } = req.body;
-   
-    const challan = {
-        customer_id: req.body.customer_id,
-        item_id: req.body.item_id,
-        quantity: req.body.quantity,
-    }
+    try{
+        const challanObject = new Challan(req.body);
 
-    Challans.create(challan)
-    .then((data)=>{
-        res.send(data);
-    })
-    .catch((err)=>{
-        res.status(500).send({
-            message: err.message || "some error occured while creating the challan"
+        const resChallan = await challanObject.save();
+
+        res.status(200).json(resChallan);
+    }
+    catch (error) {
+        return res.status(500).send({
+            message:
+            error.message || "some error occured while creating the customer",
         });
-    });
+    }
+    
 }
 
 // Mark status of the challan as paid for particular customer
 
 exports.UpdateChallan = async(req,res) => {
     const id = req.params.id;
-    console.warn(id);
     
-    Challans.update(
-        {payment_status: true}, 
-        {where: {customer_id: id}}
-    )
-    .then(numAffectedRows => {
-        res.status(200).send(`Updated ${numAffectedRows} row(s)`);
-    })
-    .catch(err => {
-        console.error(err);
-        res.status(500).send("Something went wrong");
-    });
+    try{
+        const result = await Challan.updateMany(
+            {customer_id: id},
+            {payment_status: true},
+            { new: true }
+        );
+        const totalCount = result.modifiedCount;
+
+        res.status(200).json({
+            data: result, 
+            message: `Updated ${totalCount} row(s)`
+        });
+
+    }
+    catch(error){
+        return res.status(500).send(err.mesage);
+    }
 }
 
 
