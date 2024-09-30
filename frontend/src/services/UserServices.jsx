@@ -179,6 +179,19 @@ export default {
     }
   },
 
+  GetPendingAmount: async function(id){
+    try{
+      const response = await axios.get(
+        `${API_BASE_URL}/api/challans/customerWisePendingAmount/${id}`
+      );
+      return response;
+    }
+    catch(error){
+      console.log(error);
+      return error;
+    }
+  },
+
   Update_ChallanStatusById: async function(id){
     try{
       const response = await axios.put(

@@ -51,18 +51,12 @@ export default function GetChallans(props) {
   };
 
   const location = useLocation();
-  const { id } = location.state || {};
+  const { _id } = location.state || {};
 
   const [loading, setLoading] = useState(true);
 
   const [data, setData] = useState();
-  const groupedData = {};
-
-  const groupedInvoiceData = {};
-  const subtotalData = {};
-  const [filteredData, setfilteredData] = useState(null);
-  const [filteredsubtotal, setfilteredsubtotal] = useState(null);
-  const [filteredmasterSubtotal, setfilteredmastersubtotal] = useState(null);
+  const [totalPendingAmount, setPendingAmount] = useState(0);
   const [filteredInvoiceData, setfilteredInvoiceData] = useState(null);
 
   const formatDate = (dateString) => {
@@ -96,13 +90,13 @@ export default function GetChallans(props) {
     // console.warn('clicked');
     try{
         if(isChecked){
-          const updateDone = await UserServices.Update_ChallanStatusById(id).then((res)=> {
+          const updateDone = await UserServices.Update_ChallanStatusById(_id).then((res)=> {
             console.warn('Challan status changed');
             console.log(res.data);
           });
         }  
 
-        const response = await UserServices.SaveAndDownloadInvoice(id, filteredInvoiceData).then((res)=>{
+        const response = await UserServices.SaveAndDownloadInvoice(_id, filteredInvoiceData).then((res)=>{
             console.log('success');
             return res;
         });
@@ -115,70 +109,51 @@ export default function GetChallans(props) {
   };
 
 
-
-  let masterTotal = 0;
-
   const GetChallanData = (my_id) => {
     try {
       UserServices.Get_ChallanDetailsById(my_id).then((res) => {
         const resdata = res.data;
-        // console.warn(resdata);
         setData(resdata);
-        resdata.forEach((item) => {
-          if (!groupedData[item.issue_date]) {
-            groupedData[item.issue_date] = [];
-            subtotalData[item.issue_date] = 0;
-          }
-          groupedData[item.issue_date].push(item);
-          groupedInvoiceData[item.item.id] = (groupedInvoiceData[item.item.id] || 0) + Number(item.totalQuantity);
-          subtotalData[item.issue_date] += (item.totalQuantity * item.item.selling_price);
-          masterTotal+=item.totalQuantity * item.item.selling_price;
-        });
-
-        const output = Object.entries(groupedInvoiceData).map(([item_id, quantity]) => ({ item_id, quantity: Number(quantity).toString() }));
-
-        
-
-        // console.warn(subtotalData);
-        // console.warn(groupedInvoiceData);
-        // console.warn(output);
-        setfilteredInvoiceData(output);
-        setfilteredData(groupedData);
-        setfilteredsubtotal(subtotalData);
-        setfilteredmastersubtotal(masterTotal);
+        console.warn(resdata);
+        setLoading(false);
       });
     } catch (error) {
       console.log(error);
     }
   };
 
+  const GetTotalPendingAmount = (id) => {
+    try {
+      UserServices.GetPendingAmount(id).then((res) => {
+        const pendingAmount = Number(res.data[0].totalAmount);
+        setPendingAmount(pendingAmount);
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+
   useEffect(() => {
-    GetChallanData(id);
+    GetChallanData(_id);
+    GetTotalPendingAmount(_id);
   }, []);
 
-  if (filteredData == null) {
-    // console.log('runnig');
-    return <div>loading....</div>;
+  if (loading) {
+    return <div>loading....</div>
   }
-  if(Object.keys(filteredData).length===0){
+  if(!loading && data.length===0){
     return <div>No data found</div>
   }
   
-  
-
-
-  console.warn(filteredData);
-  console.log(filteredsubtotal);
-
-  const subtotal = 0;
   return (
     <>
     <div>
     <OverviewBudget
-          difference={Object.keys(filteredData).length}
+          difference={Object.keys(data).length}
           negative
           sx={{ height: '6.5%', mb: 3, width:'40%' }}
-          value={1.18 * filteredmasterSubtotal}
+          value={1.18 * totalPendingAmount}
           saveAndDownloadInvoices = {saveAndDownloadInvoices}
           isChecked = {isChecked}
           setIsChecked = {setIsChecked}
@@ -186,10 +161,10 @@ export default function GetChallans(props) {
         />
     </div>
       
-      {Object.entries(filteredData).map(([key, value]) => (
+      {data.map((dayWiseData) => (
         <>
-          <Typography key={key} variant="h4" component="h2" sx={{ ml: 6 }}>
-            {t('Date')}: {formatDate(key)}
+          <Typography key={dayWiseData._id} variant="h4" component="h2" sx={{ ml: 6 }}>
+            {t('Date')}: {formatDate(dayWiseData._id)}
           </Typography>
 
           <br />
@@ -210,28 +185,28 @@ export default function GetChallans(props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {value.map((row) => (
-                  <TableRow key={row.challan_id}>
-                    <TableCell>{row.item.Name}</TableCell>
+                {dayWiseData.itemList.map((row, index) => (
+                  <TableRow>
+                    <TableCell>{row.item_Name}</TableCell>
                     <TableCell align="right">{row.totalQuantity}</TableCell>
-                    <TableCell align="right">{row.item.selling_price}</TableCell>
-                    <TableCell align="right">&#x20B9; {ccyFormat(row.totalQuantity*row.item.selling_price)}</TableCell>
+                    <TableCell align="right">{row.item_selling_price}</TableCell>
+                    <TableCell align="right">&#x20B9; {ccyFormat(row.subtotal)}</TableCell>
                   </TableRow>
                 ))}
 
                 <TableRow>
                   <TableCell rowSpan={3} />
                   <TableCell colSpan={2}>{t('Subtotal')}</TableCell>
-                  <TableCell align="right">&#x20B9; {ccyFormat(Number(filteredsubtotal[key]))}</TableCell>
+                  <TableCell align="right">&#x20B9; {ccyFormat(Number(dayWiseData.totalSales))}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t('Tax')}</TableCell>
                   <TableCell align="right">{`${(TAX_RATE * 100).toFixed(0)} %`}</TableCell>
-                  <TableCell align="right">&#x20B9; {ccyFormat(Number(filteredsubtotal[key]*0.18))}</TableCell>
+                  <TableCell align="right">&#x20B9; {ccyFormat(Number(dayWiseData.totalSales*0.18))}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={2}>{t('Total')}</TableCell>
-                  <TableCell align="right">&#x20B9; {ccyFormat(Number(filteredsubtotal[key]*1.18))}</TableCell>
+                  <TableCell align="right">&#x20B9; {ccyFormat(Number(dayWiseData.totalSales*1.18))}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

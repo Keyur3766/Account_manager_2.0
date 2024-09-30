@@ -126,7 +126,7 @@ exports.findAndGetChallanDetails = async(req,res)=>{
                     item_id: '$item_id'
                 },
                 totalQuantity: { $sum: '$quantity' }
-            }
+            }   
         },
         {
             $lookup: {
@@ -139,7 +139,7 @@ exports.findAndGetChallanDetails = async(req,res)=>{
         {
             $unwind: '$items'
         },
-        {
+        {   
             $project: {
                 _id: 0,
                 customer_id: '$_id.customer_id',
@@ -160,10 +160,11 @@ exports.findAndGetChallanDetails = async(req,res)=>{
                         item_id: '$item_id',
                         customer_id: '$customer_id',
                         item_Name: '$item_Name',
-                        item_selling_price: '$item_selling_price'
+                        item_selling_price: '$item_selling_price',
+                        subtotal: {$multiply: ['$item_selling_price', '$totalQuantity']}
                     }
                 },
-                totalSales: { $sum: '$item_selling_price' },
+                totalSales: { $sum: {$multiply: ['$item_selling_price', '$totalQuantity']}},
                 customer_id: { $first: '$customer_id' }
             }
         },
@@ -177,10 +178,61 @@ exports.findAndGetChallanDetails = async(req,res)=>{
 }
 
 
+exports.customerWisePendingAmount = async(req,res)=>{
+    const id = new mongoose.Types.ObjectId(req.params.id);
+
+    const pendingAmount = await Challan.aggregate([
+        {
+            $match : {
+                payment_status: false,
+                customer_id: id
+            }
+        },
+        {   
+            $group: {
+                _id: {
+                    issue_date: '$issue_date',
+                    customer_id: '$customer_id',
+                    item_id: '$item_id'
+                },
+                totalQuantity: { $sum: '$quantity' }
+            }   
+        },
+        {
+            $lookup: {
+                from: 'items', // Assuming the collection name is 'items'
+                localField: '_id.item_id',
+                foreignField: '_id',
+                as: 'items'
+            }
+        },
+        {
+            $unwind: '$items'
+        },
+        {
+            $group: {
+                _id: '',
+                totalAmount: { $sum: {$multiply: ['$items.selling_price', '$totalQuantity']}}
+            }
+        },
+        {
+            $project: {
+                _id: 0
+            }
+        }
+    ]);
+
+    return res.status(200).json(pendingAmount);
+}
+
+
+
+
 
 //Post Request challan
 exports.addChallan = async(req,res) => {
     try{
+        console.warn(req.body);
         const challanObject = new Challan(req.body);
 
         const resChallan = await challanObject.save();
@@ -219,6 +271,7 @@ exports.UpdateChallan = async(req,res) => {
         return res.status(500).send(err.mesage);
     }
 }
+
 
 
 

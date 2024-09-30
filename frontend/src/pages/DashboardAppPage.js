@@ -82,10 +82,10 @@ export default function DashboardAppPage() {
 
 
   useEffect(() => {
-    GetPendingAmount();
-    GetEstimatedProfit();
-    GetMonthlySales();
-    GetTotalCustomers();  
+    // GetPendingAmount();
+    // GetEstimatedProfit();
+    // GetMonthlySales();
+    // GetTotalCustomers();  
   },[]);
 
   const theme = useTheme();

@@ -1,5 +1,5 @@
 const challanController = require("../controllers/challans.controller");
-const {addChallan, findAndGetChallans, findAndGetChallanDetails,GenerateChallanPDF, DownloadChallanPDF, UpdateChallan} = challanController;
+const {addChallan, findAndGetChallans, findAndGetChallanDetails,GenerateChallanPDF, DownloadChallanPDF, UpdateChallan, customerWisePendingAmount} = challanController;
 
 
 
@@ -11,6 +11,9 @@ router.get("/getChallanCount/:id",findAndGetChallans);
 
 //Get challan details
 router.get("/getChallanDetails/:id",findAndGetChallanDetails);
+
+//Get challan details
+router.get("/customerWisePendingAmount/:id",customerWisePendingAmount);
 
 //Post (Create new challan)
 router.post("/addChallans",addChallan);
