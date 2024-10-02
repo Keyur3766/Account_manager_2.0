@@ -131,9 +131,8 @@ export default function AddSalesPage() {
   
   
   const saveAndDownloadInvoices = async() => {
-    console.warn('clicked');
     try{
-        const response = await UserServices.SaveAndDownloadInvoice(customer_id, inputFields).then((res)=>{
+        const response = await UserServices.SaveAndDownloadInvoice(customer_id, inputFields, true).then((res)=>{
             console.log('success');
             return res;
         });

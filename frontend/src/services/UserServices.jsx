@@ -221,18 +221,19 @@ export default {
   },
 
 // Save and Download the Invoice
-  SaveAndDownloadInvoice: async function(customerId, items){
+  SaveAndDownloadInvoice: async function(customerId, items, isPaid){
       console.warn(customerId);
       console.warn(items);
 
       try{
         await axios.post(
           `${API_BASE_URL}/api/invoice/generateInvoice`, {
-            customerId: customerId,
-            items: items
+            customer_id: customerId,
+            invoiceItem: items,
+            isPaid: isPaid
           }
         )
-        .then(()=> axios.get(`${API_BASE_URL}/api/invoice/fetchPDF`, {responseType: 'blob'}))
+        .then((res)=> axios.get(`${API_BASE_URL}/api/invoice/fetchPDF/${res.data.url}`, {responseType: 'blob'}))
         .then((res)=>{
           const pdfBlob = new Blob([res.data], {type: 'application/pdf'});
           saveAs(pdfBlob,'invoice.pdf');
