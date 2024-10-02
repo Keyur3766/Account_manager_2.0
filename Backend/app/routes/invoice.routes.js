@@ -10,6 +10,6 @@ router.post("/generateInvoice", generateInvoice);
 // router.post('/createInvoicePDF',GenerateInvoicePDF);
 
 // Download Invoice PDF
-router.get("/fetchPDF", DownloadInvoicePDF);
+router.get("/fetchPDF/:filename", DownloadInvoicePDF);
 
 module.exports = router;

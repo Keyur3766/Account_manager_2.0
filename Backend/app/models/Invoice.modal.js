@@ -1,10 +1,9 @@
 const { default: mongoose } = require("mongoose");
 
 const invoiceSchema = new mongoose.Schema({
-  billNumber: {
-    type: Number,
-    
-  },
+  // billNumber: {
+  //   type: Number,
+  // },
   customer_id: {
     type: mongoose.Schema.ObjectId,
     ref: "Customer",
@@ -23,10 +22,10 @@ const invoiceSchema = new mongoose.Schema({
       },
     },
   ],
-  payableAmount: {
-    type: Number,
-    require: true
-  },
+  // payableAmount: {
+  //   type: Number,
+  //   require: true
+  // },
   issue_date: {
     type: String,
     require: true,
