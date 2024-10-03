@@ -1,99 +1,78 @@
-//Used for validation in Node.js
-const Joi = require("joi"); 
-
-const db = require("../models");
-
-const Supplier = db.supplier;
+const Supplier = require('../models/supplier.modal');
 
 //Get Request Customer
 exports.GetSuppliers = async(req,res) => {
-    const data = await Supplier.findAll();
-    
-    res.status(200).send(data);
+    try{
+        const data = await Supplier.find();
+        res.status(200).send(data);
+    }
+    catch(err){
+        res.status(500).json({ message: `Failed to fetch suppliers from DB`});
+    }
 }
 
 
 
 //Post Request Customer
 exports.addSupplier = async(req,res) => {
-    const schema = Joi.object({
-        Name: Joi.string().min(2).required(),
-        Email: Joi.string().required(),
-        Address: Joi.string().required(),
-        City: Joi.string().required(),
-        Mobile: Joi.number().required()
-    });
+  const supplier = new Supplier(req.body);
 
-    const result = schema.validate(req.body);
+  if (!supplier) {
+    res.status(400).send("Please provide inputs");
+  }
 
-    if(result.error){
-        res.status(400).send(result.error.message);
-        return;
-    }
-    const{
-        Name,
-        Email,
-        Address,
-        City,
-        Mobile
-    } = req.body;
-
-    Supplier.findOne({where: {Email: Email}})
-    .then((data)=>{
-        if(data){
-            res.status(456).send({
-                message: "Customer with same EmailId already exist",
-            });
-            res.end();
-            return;
-        }
-        
-        const supplier = {
-            Name: req.body.Name,
-            Email: req.body.Email,
-            Address: req.body.Address,
-            City: req.body.City,
-            Mobile: req.body.Mobile
-        }
-
-        Supplier.create(supplier)
-        .then((data)=>{
-            res.send(data);
-        })
-        .catch((err)=>{
-            res.status(500).send({
-                message: err.message || "some error occured while creating the customer"
-            });
+  // Check if user already exist
+  await Supplier.findOne({ Email: supplier.Email })
+    .then((data) => {
+      if (data) {
+        res.status(456).send({
+          message: "Supplier with same EmailId already exist",
         });
+        return;
+      }
     })
     .catch((err) => {
-        res.status(500).send({
-            message: "Error retrieving while entering the data into database=",
-        });
+      res.status(500).send({
+        message:
+          err.message ||
+          "Error retrieving while entering the data into database=",
+      });
+    });
+
+  // Save customer details
+  await supplier
+    .save()
+    .then((data) => {
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "some error occured while creating the customer",
+      });
     });
 }
 
 
 //Delete Supplier
-exports.Delete_Supplier = (req, res) => {
-const id = req.params.id;
-
-    Supplier.destroy({
-    where: { id: id },
-    })
-    .then((num) => {
-    if (num == 1) {
-        res.send({
-        message: "Supplier was deleted successfully!",
+exports.Delete_Supplier = async (req, res) => {
+    const id = req.params.id;
+    try{
+        const response  = await Supplier.deleteOne({_id: id});
+        if(response.deletedCount == 1){
+        res.status(200).send({
+            message: "Customer was deleted successfully!",
         });
-    } else {
-        res.send({
-        message: `Cannot delete Supplier with id=${id}. Maybe Item was not found!`,
+        }
+        else{
+        res.status(500).send({
+            message: `Cannot delete supplier with id=${id}. Maybe supplier was not found!`,
+        });
+        }
+    }
+    catch(error){
+        res.status(500).send({
+        message: `Error occured while deleting the record: ${error.message}`,
         });
     }
-    })
-    .catch((err) => {
-    res.status(500).send({
-        message: "Could not delete Item with id=" + id,
-    });
-})};
+};

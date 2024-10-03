@@ -1,39 +1,14 @@
-//Used for validation in Node.js
-const Joi = require("joi"); 
-const pdf = require('html-pdf');
 const pdfTemplate = require("../documents/index");
-const db = require("../models");
-const Sequelize = require('sequelize');
 const Challan = require("../models/challans.modal");
 const mongoose = require("mongoose");
-
-const Challans = db.challans;
-
-// //Get Request Customer
-// exports.GetCustomers = async(req,res) => {
-//     const data = await Customer.findAll();
-    
-//     res.status(200).send(data);
-// }
+const puppeteer = require("puppeteer");
+const fs = require('fs')
 
 
 // Get pending challan count
 exports.findAndGetChallans = async(req,res)=>{
     let id = new mongoose.Types.ObjectId(req.params.id);
-    // const data = await Challans.count({
-    //     attributes: [
-    //         'customer_id', 'issue_date',[Sequelize.fn('COUNT', 'challan_id'), 'count']
-    //     ],
-    //     where: {
-    //         payment_status:'false',
-    //         customer_id: id
-    //     },
-    //     group: ['customer_id','issue_date']
-    // });
 
-    // const size = Object.keys(data).length;
-    
-    // res.status(200).send(size.toString());
     try{
         const challans = await Challan.aggregate([
             {
@@ -76,41 +51,6 @@ exports.findAndGetChallans = async(req,res)=>{
 exports.findAndGetChallanDetails = async(req,res)=>{
     const id = new mongoose.Types.ObjectId(req.params.id);
 
-    // const data = await Challans.findAll({
-    //     attributes: ["customer_id","issue_date", [Sequelize.fn('SUM', Sequelize.col('quantity')), 'totalQuantity']],
-    //     where: {
-    //         payment_status:'false',
-    //         customer_id: id
-    //     },
-    //     include: [
-    //         {
-    //             model: db.items,
-    //             attributes: ["id","Name","selling_price"]
-    //         }  
-    //     ],
-    //     group: ['issue_date','customer_id','item.id'],
-    //     order: [
-    //         ['issue_date', 'ASC']
-    //     ]
-    // });
-
-
-
-    // Sample Output
-    // {
-    //     "_id": "2024/1/27",
-    //     "itemList": [
-    //         {
-    //             "totalQuantity": 130,
-    //             "item_id": "65ad438af07c7f3e3d008c25",
-    //             "customer_id": "65ad438af07c7f3e3d008c25",
-    //             "item_Name": "Item4",
-    //             "item_selling_price": 20
-    //         }
-    //     ],
-    //     "totalSales": 20,
-    //     "customer_id": "65ad438af07c7f3e3d008c25"
-    // },
     const challanDetails = await Challan.aggregate([
         {
             $match : {
@@ -177,7 +117,6 @@ exports.findAndGetChallanDetails = async(req,res)=>{
     res.status(200).send(challanDetails);
 }
 
-
 exports.customerWisePendingAmount = async(req,res)=>{
     const id = new mongoose.Types.ObjectId(req.params.id);
 
@@ -225,14 +164,9 @@ exports.customerWisePendingAmount = async(req,res)=>{
     return res.status(200).json(pendingAmount);
 }
 
-
-
-
-
 //Post Request challan
 exports.addChallan = async(req,res) => {
     try{
-        console.warn(req.body);
         const challanObject = new Challan(req.body);
 
         const resChallan = await challanObject.save();
@@ -249,7 +183,6 @@ exports.addChallan = async(req,res) => {
 }
 
 // Mark status of the challan as paid for particular customer
-
 exports.UpdateChallan = async(req,res) => {
     const id = req.params.id;
     
@@ -272,25 +205,88 @@ exports.UpdateChallan = async(req,res) => {
     }
 }
 
-
-
-
 // Generating Challan PDF
 exports.GenerateChallanPDF = async(req,res) => {
-    // const {inputFields} = req.body;
+    const {inputFields, customer_id} = req.body;
 
-    pdf.create(pdfTemplate(req.body),{}).toFile(`${__dirname}/result.pdf`, (err) => {
-        if(err){
-            res.send(Promise.reject());
-        }
-        console.log("pdf generated");
-        res.send(Promise.resolve());
+    const challansToInsert = [];
+
+    inputFields.map((row, index) => {
+        challansToInsert.push({
+            customer_id: customer_id,
+            item_id: row.item_id,
+            quantity: row.quantity
+        });
     });
+    await Challan.insertMany(challansToInsert).then(function (result) {
+        const ids = [];
+        result.map((entry)=>{
+            ids.push(entry._id);
+        });
+        
+        Challan.find({ _id: { $in: ids } })
+            .populate({path: 'customer_id', select: 'Name'})
+            .populate({path: 'item_id', select: 'Name selling_price'})
+        .then(async(records) => {
+            console.log('Matching records:', records);
+            const filePath = `challan_${records[0]._id}.pdf`;
+            try{
+                await GenerateChallanPDFFromTemplate(records, filePath);
+            }
+            catch(err){
+                console.log(err);
+            }
+
+            res.status(200).json({
+                message: "PDF stored successfully",
+                url: filePath,
+                data: records
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching records:', err);
+        });
+
+    }).catch(function (error) {
+        console.log(error)     // Failure 
+    }); 
+}
+
+
+async function GenerateChallanPDFFromTemplate(inputData, filePath) {
+    const browser = await puppeteer.launch({ headless: "new" });
+    const page = await browser.newPage();
+    console.log(inputData);
+    const reportHTML = pdfTemplate(inputData);
+
+    await page.setContent(reportHTML);
+
+    // Generate PDF for the report
+    await page.pdf({ path: filePath, format: "A4" });
+
+    await browser.close();
 }
 
 // Downloading Generated PDF
 exports.DownloadChallanPDF = async(req,res) => {
-    console.log("Pdf downloading");
-    console.warn(`${__dirname}`);
-    res.sendFile(`${__dirname}/result.pdf`);
+    const path = `${__basedir}/${req.params.filename}`;
+    console.log(path);
+  if(!fs.existsSync(path)){
+    res.status(400).json({
+      message: "File doesn't exist"
+    });
+  }
+  var data = fs.readFileSync(path);
+
+  fs.unlink(path, (err) => {
+    if (err) {
+      console.error(`Error removing file: ${err}`);
+      return;
+    }
+  
+    console.log(`File ${path} has been successfully removed.`);
+  });
+  
+  res.contentType("application/pdf");
+  res.send(data);
 }

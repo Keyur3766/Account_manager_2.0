@@ -7,7 +7,7 @@ const authenticate = require("../middleware/authenticate");
 var router = require("express").Router();
 
 //Get Customers
-router.get("/getSuppliers",authenticate, GetSuppliers);
+router.get("/getSuppliers",GetSuppliers);
 
 //Post (Create new customer)
 router.post("/addSupplier",addSupplier);

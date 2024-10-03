@@ -205,15 +205,14 @@ export default {
     }
   },
 
-  DownloadChallan: async function(inputFields, customerName){
-      console.warn(inputFields);
+  DownloadChallan: async function(inputFields, customer_id){
       await axios.post(
         `${API_BASE_URL}/api/challans/createChallanPDF`,{
           inputFields : inputFields,
-          customerName: customerName
+          customer_id: customer_id
         }
       )
-      .then(() =>  axios.get(`${API_BASE_URL}/api/challans/fetchPDF`, {responseType: 'blob'}))
+      .then((res) =>  axios.get(`${API_BASE_URL}/api/challans/fetchPDF/${res.data.url}`, {responseType: 'blob'}))
       .then((res)=>{
         const pdfBlob = new Blob([res.data], {type: 'application/pdf'});
         saveAs(pdfBlob,'challans.pdf');
@@ -222,9 +221,6 @@ export default {
 
 // Save and Download the Invoice
   SaveAndDownloadInvoice: async function(customerId, items, isPaid){
-      console.warn(customerId);
-      console.warn(items);
-
       try{
         await axios.post(
           `${API_BASE_URL}/api/invoice/generateInvoice`, {

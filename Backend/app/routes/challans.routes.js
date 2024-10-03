@@ -22,7 +22,7 @@ router.post("/addChallans",addChallan);
 router.post('/createChallanPDF',GenerateChallanPDF);
 
 // Get Challan PDF
-router.get("/fetchPDF", DownloadChallanPDF);
+router.get("/fetchPDF/:filename", DownloadChallanPDF);
 
 // Mark the challan as paid for the particular customer
 router.put("/updateChallan/:id", UpdateChallan);

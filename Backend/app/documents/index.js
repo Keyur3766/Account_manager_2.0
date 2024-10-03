@@ -46,7 +46,7 @@ function ccyFormat(num) {
   return `${num.toFixed(2)}`;
 }
 
-module.exports = ({inputFields, customerName}) =>{
+module.exports = (inputData) =>{
   // const itemNames = Promise.all(inputFields.map(async (input, index) => {
   //   return await ItemNameById(input.item_id);
   // }));
@@ -122,7 +122,7 @@ module.exports = ({inputFields, customerName}) =>{
         <h1 class="challan-title">Challan</h1>
         <div class="challan-details">
           <p class="challan-label">Customer Name:</p>
-          <p class="challan-value">${customerName}</p>
+          <p class="challan-value">${inputData[0].customer_id.Name}</p>
         </div>
         <div class="challan-details">
           <p class="challan-label">Date:</p>
@@ -138,13 +138,13 @@ module.exports = ({inputFields, customerName}) =>{
             <th class="item-header">Amount</th>
           </tr>
 
-          ${inputFields.map((input, index) => {
-            total += input.item_price * input.quantity
+          ${inputData.map((input, index) => {
+            total += input.item_id.selling_price * input.quantity
             return `<tr>
-              <td class="item-name">${input.item_name}</td>
+              <td class="item-name">${input.item_id.Name}</td>
               <td class="item-quantity">${input.quantity}</td>
-              <td class="item-rate">&#x20B9;${ccyFormat(input.item_price)}</td>
-              <td class="item-amount">&#x20B9;${ccyFormat(input.item_price * input.quantity)}</td>
+              <td class="item-rate">&#x20B9;${ccyFormat(input.item_id.selling_price)}</td>
+              <td class="item-amount">&#x20B9;${ccyFormat(input.item_id.selling_price * input.quantity)}</td>
             </tr>`;
 
             

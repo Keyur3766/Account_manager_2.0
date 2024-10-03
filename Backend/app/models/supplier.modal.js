@@ -1,31 +1,37 @@
-module.exports = (sequelize, Sequelize) => {
-    const Supplier = sequelize.define("supplier", {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+const mongoose = require("mongoose");
+
+
+const supplierSchema = new mongoose.Schema({
+  Name: {
+    type: String,
+    require: true,
+  },
+  Email: {
+    type: String,
+    require: true,
+  },
+  Address: {
+    type: String,
+    require: true,
+  },
+  City: {
+    type: String,
+    require: true,
+  },
+  Mobile: {
+    type: Number,
+    validate: {
+      validator: function(v) {
+        return /^\d{10}$/.test(v.toString()); // Regular expression to match exactly 10 digits
       },
-      Name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      Email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      Address: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      City: {
-        type:Sequelize.STRING,
-        allowNull: false
-      },
-      Mobile: {
-        type: Sequelize.BIGINT,
-        allowNull: false,
-      },
-    });
-  
-    return Supplier;
-};
+      message: props => `${props.value} is not a valid 10-digit mobile number!`
+    },
+    required: [true, 'Mobile number is required']
+  }
+});
+
+const Supplier = mongoose.model("Supplier", supplierSchema);
+
+module.exports = Supplier;
+
+

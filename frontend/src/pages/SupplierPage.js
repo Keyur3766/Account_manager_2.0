@@ -226,11 +226,11 @@ export default function UserPage() {
                 />
                 <TableBody  >
                   {filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                    const { id, Name, Email, Address, City, Mobile } = row;
+                    const { _id, Name, Email, Address, City, Mobile } = row;
                     const selectedUser = selected.indexOf(Name) !== -1;
 
                     return (
-                      <TableRow hover key={id} tabIndex={-1} role="checkbox" selected={selectedUser}>
+                      <TableRow hover key={_id} tabIndex={-1} role="checkbox" selected={selectedUser}>
                         <TableCell padding="checkbox">
                           <Checkbox checked={selectedUser} onChange={(event) => handleClick(event, Name)} />
                         </TableCell>
@@ -255,7 +255,7 @@ export default function UserPage() {
                         </TableCell> */}
 
                         <TableCell align="right">
-                          <IconButton size="large" color="inherit" onClick={(event) => {setOpen(event.currentTarget);setcurId(id)}} >
+                          <IconButton size="large" color="inherit" onClick={(event) => {setOpen(event.currentTarget);setcurId(_id)}} >
                             <Iconify icon={'eva:more-vertical-fill'} />
                           </IconButton>
                         </TableCell>
