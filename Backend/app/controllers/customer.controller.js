@@ -1,121 +1,93 @@
-//Used for validation in Node.js
-const Joi = require("joi"); 
-
-const db = require("../models");
-
-const Customer = db.customer;
+const Customer = require("../models/customer.modal");
 
 //Get Request Customer
-exports.GetCustomers = async(req,res) => {
-    const data = await Customer.findAll();
-    
-    
+exports.GetCustomers = async (req, res) => {
+  try{
+    const data = await Customer.find();
     // console.log(Object.keys(data).length);
-    res.status(200).send(data);
-}
+    res.status(200).json(data);
+  }
+  catch(err){
+    res.status(500).json({ message: `Failed to fetch customers from the Database`});
+  }
+};
 
 //Get customer by Id
-exports.GetCustomerById = async(req,res) => {
-    const customer_id = req.params.id;
-    try {
-        // Fetch item by item ID from the database
-        const customer = await Customer.findByPk(customer_id);
+exports.GetCustomerById = async (req, res) => {
+  const customer_id = req.params.id;
+  try {
+    // Fetch item by item ID from the database
+    const customer = await Customer.findOne({_id :customer_id});
 
-        if (!customer) {
-        return res.status(404).json({ error: 'Customer not found' });
-        }
-
-        // Extract item name from the retrieved item
-        const customerName = customer.Name;
-        // Return item name as JSON response
-        res.json({ customerName });
-    } catch (error) {
-        // Handle error
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch customer name' });
+    if (!customer) {
+      return res.status(404).send({ message: "Customer not found" });
     }
-}
 
-
+    // Extract item name from the retrieved item
+    const customerName = customer.Name;
+    // Return item name as JSON response
+    res.status(200).json({ customerName });
+  } catch (error) {
+    // Handle error
+    res.status(500).json({ message: `Failed to fetch customer name: ${error.message}` });
+  }
+};
 
 //Post Request Customer
-exports.addCustomer = async(req,res) => {
-    const schema = Joi.object({
-        Name: Joi.string().min(2).required(),
-        Email: Joi.string().required(),
-        Address: Joi.string().required(),
-        City: Joi.string().required(),
-        Mobile: Joi.number().required()
-    });
-
-    const result = schema.validate(req.body);
-
-    if(result.error){
-        res.status(400).send(result.error.message);
+exports.addCustomer = async (req, res) => {
+  const customer = new Customer(req.body);
+  if (!customer) {
+    res.status(400).send("Please Provide the input");
+    return;
+  }
+  // Check if user already exist
+  await Customer.findOne({ Email: customer.Email })
+    .then((data) => {
+      if (data) {
+        res.status(456).send({
+          message: "Customer with same EmailId already exist",
+        });
         return;
-    }
-    const{
-        Name,
-        Email,
-        Address,
-        City,
-        Mobile
-    } = req.body;
-    console.log(Name);
-    Customer.findOne({where: {Email: Email}})
-    .then((data)=>{
-        if(data){
-            res.status(456).send({
-                message: "Customer with same EmailId already exist",
-            });
-            res.end();
-            return;
-        }
-        
-        const customer = {
-            Name: req.body.Name,
-            Email: req.body.Email,
-            Address: req.body.Address,
-            City: req.body.City,
-            Mobile: req.body.Mobile
-        }
-
-        Customer.create(customer)
-        .then((data)=>{
-            res.send(data);
-        })
-        .catch((err)=>{
-            res.status(500).send({
-                message: err.message || "some error occured while creating the customer"
-            });
-        });
+      }
     })
     .catch((err) => {
-        res.status(500).send({
-            message: "Error retrieving while entering the data into database=",
-        });
+      res.status(500).send({
+        message: err.message || "Error retrieving while entering the data into database=",
+      });
     });
-}
 
-exports.Delete_Customer = (req, res) => {
-const id = req.params.id;
+    // Save customer details
+    await customer.save()
+        .then((data) => {
+          res.send(data);
+        })  
+        .catch((err) => {
+          res.status(500).send({
+            message:
+              err.message || "some error occured while creating the customer",
+          });
+        });
+};
 
-    Customer.destroy({
-    where: { id: id },
-    })
-    .then((num) => {
-    if (num == 1) {
-        res.send({
+exports.Delete_Customer = async (req, res) => {
+  const id = req.params.id;
+  try{
+    const response  = await Customer.deleteOne({_id: id});
+    if(response.deletedCount == 1){
+      res.status(200).send({
         message: "Customer was deleted successfully!",
-        });
-    } else {
-        res.send({
-        message: `Cannot delete Customer with id=${id}. Maybe Customer was not found!`,
-        });
+      });
     }
-    })
-    .catch((err) => {
+    else{
+      res.status(500).send({
+        message: `Cannot delete Customer with id=${id}. Maybe Customer was not found!`,
+      });
+    }
+  }
+  catch(error){
     res.status(500).send({
-        message: "Could not delete Customer with id=" + id,
+      message: `Error occured while deleting the record: ${error.message}`,
     });
-})};
+  }
+  
+};

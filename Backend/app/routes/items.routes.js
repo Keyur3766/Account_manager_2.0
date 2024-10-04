@@ -15,7 +15,7 @@ router.post("/addItems",upload.single("file"),addItems);
 
 router.get("/image/:filename", getItemImage);
 
-router.get("/getItems",authenticate,getItems);
+router.get("/getItems",getItems);
 
 //Delete Item
 router.delete("/getItems/:id",Delete_Item);

@@ -93,7 +93,6 @@ export default {
     }
   },
   FetchItems: async function(){
-    
     try{
       const response = await axios.get(`${API_BASE_URL}/api/items/getItems`,
       {
@@ -180,6 +179,19 @@ export default {
     }
   },
 
+  GetPendingAmount: async function(id){
+    try{
+      const response = await axios.get(
+        `${API_BASE_URL}/api/challans/customerWisePendingAmount/${id}`
+      );
+      return response;
+    }
+    catch(error){
+      console.log(error);
+      return error;
+    }
+  },
+
   Update_ChallanStatusById: async function(id){
     try{
       const response = await axios.put(
@@ -193,15 +205,14 @@ export default {
     }
   },
 
-  DownloadChallan: async function(inputFields, customerName){
-      console.warn(inputFields);
+  DownloadChallan: async function(inputFields, customer_id){
       await axios.post(
         `${API_BASE_URL}/api/challans/createChallanPDF`,{
           inputFields : inputFields,
-          customerName: customerName
+          customer_id: customer_id
         }
       )
-      .then(() =>  axios.get(`${API_BASE_URL}/api/challans/fetchPDF`, {responseType: 'blob'}))
+      .then((res) =>  axios.get(`${API_BASE_URL}/api/challans/fetchPDF/${res.data.url}`, {responseType: 'blob'}))
       .then((res)=>{
         const pdfBlob = new Blob([res.data], {type: 'application/pdf'});
         saveAs(pdfBlob,'challans.pdf');
@@ -209,18 +220,16 @@ export default {
   },
 
 // Save and Download the Invoice
-  SaveAndDownloadInvoice: async function(customerId, items){
-      console.warn(customerId);
-      console.warn(items);
-
+  SaveAndDownloadInvoice: async function(customerId, items, isPaid){
       try{
         await axios.post(
           `${API_BASE_URL}/api/invoice/generateInvoice`, {
-            customerId: customerId,
-            items: items
+            customer_id: customerId,
+            invoiceItem: items,
+            isPaid: isPaid
           }
         )
-        .then(()=> axios.get(`${API_BASE_URL}/api/invoice/fetchPDF`, {responseType: 'blob'}))
+        .then((res)=> axios.get(`${API_BASE_URL}/api/invoice/fetchPDF/${res.data.url}`, {responseType: 'blob'}))
         .then((res)=>{
           const pdfBlob = new Blob([res.data], {type: 'application/pdf'});
           saveAs(pdfBlob,'invoice.pdf');
@@ -236,7 +245,7 @@ export default {
     try{
       const response = await axios.post(
         `${API_BASE_URL}/api/login/generateToken`, {
-          username: email,
+          email: email,
           password: password
         }
       );

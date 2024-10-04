@@ -31,8 +31,11 @@ ShopProductCard.propTypes = {
 export default function ShopProductCard({ product, callback }) {
   const {t} = useTranslation();
   const [open, setOpen] = useState(null);
+  
+  const { Name, selling_price, purchase_price, item_color, total_stocks, image } = product;
 
-  const { Name, selling_price, purchase_price, item_color, total_stocks, imageType, imageData, imageName } = product;
+  const { imageType, imageData } = image;
+
   const handleCloseMenu = () => {
     setOpen(null);
   };
@@ -63,7 +66,7 @@ export default function ShopProductCard({ product, callback }) {
   // *****
   const handleDelete = () => {
     try {
-      UserServices.Item_Delete(product.id).then((res) => {
+      UserServices.Item_Delete(product._id).then((res) => {
         console.log("Item Deleted successfully");
         callback();
       });
@@ -74,7 +77,7 @@ export default function ShopProductCard({ product, callback }) {
 
   const handleStockInrequest = () => {
     try{
-      UserServices.UpdateStockIN(product.id, stockInQuant).then((res)=> {
+      UserServices.UpdateStockIN(product._id, stockInQuant).then((res)=> {
         if(res.status===200){
           console.log("Stock added....");
           setdialogOpenstockIn(false);
@@ -89,9 +92,8 @@ export default function ShopProductCard({ product, callback }) {
 
   const handleStockoutrequest = () => {
     try{
-      UserServices.UpdateStockOUT(product.id, stockOutQuant).then((res)=> {
+      UserServices.UpdateStockOUT(product._id, stockOutQuant).then((res)=> {
         if(res.status===200){
-          console.log("Stock removed....");
           setdialogOpenstockOut(false);
           window.location.reload();
         }

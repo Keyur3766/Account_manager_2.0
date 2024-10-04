@@ -105,7 +105,7 @@ export default function CustomerList({ openFilter, onOpenFilter, onCloseFilter, 
                       </>
                     }
                   />
-                  <Button variant="outlined" sx={{ mt: 0, mr: 1, flexShrink: 0 }} onClick = {()=>{setCustomerId(row.id);setCustomerName(row.Name);onCloseFilter()}}>
+                  <Button variant="outlined" sx={{ mt: 0, mr: 1, flexShrink: 0 }} onClick = {()=>{setCustomerId(row._id);setCustomerName(row.Name);onCloseFilter()}}>
                     {t('Add')}
                   </Button>
                 </ListItem>

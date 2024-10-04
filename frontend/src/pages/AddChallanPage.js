@@ -157,7 +157,7 @@ export default function AddChallanPage() {
   const downloadChallan = async() => {
     console.warn('clicked');
     try{
-      UserServices.DownloadChallan(inputFields, customerName).then((res)=>{
+      UserServices.DownloadChallan(inputFields, customer_id).then((res)=>{
         console.log('success');
         return res;
       })

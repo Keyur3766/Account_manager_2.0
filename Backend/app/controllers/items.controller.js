@@ -1,7 +1,7 @@
 //Used for validation in Node.js
 const Joi = require("joi");
 const path = require("path");
-
+const Product = require("../models/items.modal");
 const db = require("../models");
 const fs = require("fs");
 
@@ -11,33 +11,24 @@ const Item = db.items;
 exports.getItems = async (req, res) => {
   try {
     // console.log("From API:");
-    const items = await Item.findAll({order: [
-      ['total_stocks', 'DESC'],
-    ]})
-      .then((items) => {
-        items.map((i) => {
-          const itemimage = i.imageData.toString("base64");
-          i["imageData"] = itemimage;
-        });
-        return items;
-      })
-      .then((items) => {
-        return res.status(200).send(items);
-      });
+    const items = await Product.find({}).lean().sort({ total_stocks: -1 }).exec();
+    const updatedItems = items.map((i) => {
+      const itemimage = i.image.imageData.toString("base64");
+      return { ...i, image: { ...i.image, imageData: itemimage } };
+    });
+    return res.status(200).json(updatedItems);
   } catch (error) {
+    console.log(error);
     return res.status(500).send(error.mesage);
   }
 };
-
-
-
 
 // Get ItemName by Id
 exports.getItemById = async (req,res) => {
   const itemId = req.params.item_id;
   try {
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
+    const item = await Product.findOne({_id: itemId});
 
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
@@ -64,12 +55,13 @@ exports.UpdateStockIns = async(req,res) => {
   const quant = req.body.quantity;
   try{
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
-    item.total_stocks += parseInt(quant,10);
+    const item = await Product.findOneAndUpdate(
+      {_id: itemId},
+      {$inc: { total_stocks: parseInt(quant,10) } },
+      { new: true }
+    );
 
-    await item.save();
-
-    res.status(200).send("stock added successfully");
+    res.status(200).json({data: item, message: "stock added successfully"});
   }
   catch(err){
     return res.status(500).send(err.mesage);
@@ -83,19 +75,18 @@ exports.UpdateStockOUTs = async(req,res) => {
   const quant = req.body.quantity;
   try{
     // Fetch item by item ID from the database
-    const item = await Item.findByPk(itemId);
-    item.total_stocks -= parseInt(quant,10);
+    const item = await Product.findOneAndUpdate(
+      {_id: itemId},
+      {$inc: { total_stocks: parseInt(-quant,10) } },
+      { new: true }
+    );
 
-    await item.save();
-
-    res.status(200).send("stock deleted successfully");
+    res.status(200).json({data: item, message: "stock deleted successfully"});
   }
   catch(err){
     return res.status(500).send(err.mesage);
   }
 }
-
-
 
 //Get Item Image
 exports.getItemImage = async (req, res) => {
@@ -111,79 +102,47 @@ exports.getItemImage = async (req, res) => {
 //Post Request Item
 exports.addItems = async (req, res) => {
   try {
-    console.log(req.file);
-
     if (req.file == undefined) {
       return res.send("You must select a file");
     }
 
-    const Name = req.body.Name;
+    const name = req.body.Name;
+    const productObject = new Product(req.body);
 
-    Item.findOne({ where: { Name: Name } }).then((data) => {
-      if (data) {
-        res.status(456).send({
-          message: "Product with same Name already exist",
-        });
-        res.end();
-        return;
-      }
-      const my_item = {
-        Name: req.body.Name,
-        purchase_price: req.body.purchase_price,
-        selling_price: req.body.selling_price,
-        item_color: req.body.item_color,
-        total_stocks: req.body.total_stocks,
+    productObject.image.imageData = fs.readFileSync(
+      __basedir + req.body.image.imagePath
+    );
 
-        //For images
-        imageType: req.file.mimetype,
-        imageName: req.file.originalname,
-        imageData: fs.readFileSync(
-          __basedir + "/resources/static/assets/uploads/" + req.file.filename
-        ),
-      };
+    const resProduct = await productObject.save();
 
-      Item.create(my_item)
-        .then((image) => {
-          // console.log(image);
-          fs.writeFileSync(
-            __basedir + "/resources/static/assets/temps/" + image.imageName,
-            image.imageData
-          );
-
-          return res.send(`File has been uploaded.`);
-        })
-        .catch((err) => {
-          res.status(500).send({
-            message:
-              err.message || "some error occured while creating the Item",
-          });
-        });
-    });
+    res.status(200).send(resProduct)
   } catch (error) {
-    console.log(error);
-    return res.send(`Error when trying upload images: ${error}`);
+    return res.status(500).send({
+      message:
+      error.message || "some error occured while creating the customer",
+    });
   }
 };
 
-exports.Delete_Item = (req, res) => {
-const id = req.params.id;
+exports.Delete_Item = async(req, res) => {
+  const id = req.params.id;
 
-  Item.destroy({
-    where: { id: id },
-  })
-  .then((num) => {
-    if (num == 1) {
-      res.send({
-        message: "Item was deleted successfully!",
-      });
-    } else {
-      res.send({
-        message: `Cannot delete Item with id=${id}. Maybe Item was not found!`,
+  try{
+    const response  = await Product.deleteOne({_id: id});
+
+    if(response.deletedCount == 1){
+      res.status(200).send({
+        message: "Product deleted successfully!",
       });
     }
-  })
-  .catch((err) => {
-    res.status(500).send({
-      message: "Could not delete Item with id=" + id,
-    });
-})};
+    else{
+      res.status(500).send({
+        message: `Cannot delete Product with id=${id}. Maybe Product was not found!`,
+      });
+    }
+  }
+  catch(error){
+    res.status(500).send(err.message);
+  }
+  
+};

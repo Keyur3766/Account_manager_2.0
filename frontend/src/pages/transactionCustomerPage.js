@@ -70,8 +70,9 @@ export default function TransactionCustomerPage() {
       const result = await UserServices.FetchCustomer();
       setData(result.data);   
       
-      const promises = result.data.map((entry) => UserServices.GetTransactionAmountById(entry.id).then((res)=>{
-        const newTransactionAmount = { id: entry.id, amount: res.data.total };
+      const promises = result.data.map((entry) => UserServices.GetTransactionAmountById(entry._id).then((res)=>{
+        const newTransactionAmount = { _id: entry._id, amount: res.data.total? res.data.total:0 };
+        console.warn(newTransactionAmount);
         setTransactionAmount((prevTrans) => [...prevTrans, newTransactionAmount]);
       }));
       await Promise.all(promises); 
@@ -83,7 +84,7 @@ export default function TransactionCustomerPage() {
 
   const mergeStates = async() => {
     const mergedState = await data.map(obj1 => {
-      const obj2 = transactionAmount.find(obj2 => obj2.id === obj1.id);
+      const obj2 = transactionAmount.find(obj2 => obj2._id === obj1._id);
       return obj2 ?{ ...obj1, ...obj2 }:obj1;
     });
     setData(mergedState);
@@ -97,8 +98,8 @@ export default function TransactionCustomerPage() {
   const CUSTOMERDATA = Array.from(data);
 
   const navigate = useNavigate();
-  const handleViewDetailsClick = (id) => {
-    navigate('/dashboard/customerTransactions/details',{ state: { id } });
+  const handleViewDetailsClick = (_id) => {
+    navigate('/dashboard/customerTransactions/details',{ state: { _id } });
   }
 
   console.warn(CUSTOMERDATA);
@@ -153,7 +154,7 @@ export default function TransactionCustomerPage() {
                     <Button
                       variant="outlined"
                       sx={{ mt: 0, mr: 1, flexShrink: 0 }}
-                      onClick={() => handleViewDetailsClick(row.id)}
+                      onClick={() => handleViewDetailsClick(row._id)}
                     >
                       {t('View details')}
                     </Button>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @mui
-import { Link, Stack, IconButton, InputAdornment, TextField, Checkbox } from '@mui/material';
+import { Link, Stack, IconButton, InputAdornment, TextField, Checkbox, Button, CardActions } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 // components
 import Iconify from '../../../components/iconify';
@@ -74,19 +74,42 @@ export default function LoginForm() {
    
   }
 
-
+  const handleSignInGuest = async() => {
+    UserServices.GenerateLoginToken("kcode@gmail.com", "1234").then((res)=>{
+      if(res.status===200){
+        console.warn("success");
+        navigate('/dashboard', { replace: true });
+      }
+      console.log(res);
+      if(res.response && res.response.status===400){
+        console.warn("UserName or password is incorrect");
+        setServerError('Invalid credentials');
+      }
+    })
+    .catch((error)=>{
+        console.warn(error);
+        navigate('/login');
+    })
+  }
 
   return (
     <>
       <Stack spacing={3} sx={{ my: 2 }}>
-        {serverError && <div className="error" style={{ color: 'red'}}>{serverError}</div>}
+        {serverError && (
+          <div className="error" style={{ color: 'red' }}>
+            {serverError}
+          </div>
+        )}
 
-        <TextField name="email" onChange={(e)=> setEmail(e.target.value)} value={email} label="Email address" />
-        <div className="error" style={{ color: 'red', marginTop: 0 }}>{emailError}</div>
+        <TextField name="email" onChange={(e) => setEmail(e.target.value)} value={email} label="Email address" />
+        <div className="error" style={{ color: 'red', marginTop: 0 }}>
+          {emailError}
+        </div>
         <TextField
           name="password"
           label="Password"
-          onChange={(e)=> setPassword(e.target.value)} value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          value={password}
           type={showPassword ? 'text' : 'password'}
           InputProps={{
             endAdornment: (
@@ -98,19 +121,18 @@ export default function LoginForm() {
             ),
           }}
         />
-        <div className="error" style={{ color: 'red', marginTop: 0 }}>{passwordError}</div>
+        <div className="error" style={{ color: 'red', marginTop: 0 }}>
+          {passwordError}
+        </div>
       </Stack>
 
-      {/* <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ my: 2 }}>
-        <Checkbox name="remember" label="Remember me" />
-        <Link variant="subtitle2" underline="hover">
-          Forgot password?
-        </Link>
-      </Stack> */}
+      {/* <CardActions style={}> */}
+        <LoadingButton fullWidth size="large" type="submit" variant="contained" onClick={sendDataForValidation}>
+          Login
+        </LoadingButton>
 
-      <LoadingButton fullWidth size="large" type="submit" variant="contained" onClick={sendDataForValidation}>
-        Login
-      </LoadingButton>
+        <Button variant="outlined" sx={{mt:2}} onClick={handleSignInGuest}>Signin as a Guest</Button>
+      {/* </CardActions> */}
     </>
   );
 }

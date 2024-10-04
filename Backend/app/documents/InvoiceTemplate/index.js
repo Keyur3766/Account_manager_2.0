@@ -30,10 +30,7 @@ function ccyFormat(num) {
   return `${num.toFixed(2)}`;
 }
 
-module.exports = ({customer,items, total_amount, id}) => {
-    // console.warn(items);
-    // console.warn(total_amount);
-    
+module.exports = ({customer_id, invoiceItem, _id}) => {
     const today = new Date();
     const dueDate = new Date();
 
@@ -188,11 +185,11 @@ module.exports = ({customer,items, total_amount, id}) => {
           border-top: 1px solid #C1CED9;
           padding: 8px 0;
           text-align: center;
-          max-width: 600px;
+          max-width: 100%;
         }
 
         .container{
-          max-width: 600px;
+          max-width: 100%;
 
           margin: auto 0;
         }
@@ -213,12 +210,12 @@ module.exports = ({customer,items, total_amount, id}) => {
           </div>
           <div id="project">
 
-            <div><span>CLIENT</span> ${customer.Name}</div>
-            <div><span>ADDRESS</span> ${customer.Address}, ${customer.City}</div>
-            <div><span>EMAIL</span> <a href="mailto:${customer.Email}">${customer.Email}</a></div>
+            <div><span>CLIENT</span> ${customer_id.Name}</div>
+            <div><span>ADDRESS</span> ${customer_id.Address}, ${customer_id.City}</div>
+            <div><span>EMAIL</span> <a href="mailto:${customer_id.Email}">${customer_id.Email}</a></div>
             <div><span>DATE</span> ${formatDate(today)}</div>
             <div><span>DUE DATE</span> ${formatDate(dueDate)}</div>
-            <div><span>BILL NO</span> ${id}</div>
+            <div><span>BILL NO</span> ${10}</div>
           </div>
         </header>
         <main>
@@ -234,15 +231,15 @@ module.exports = ({customer,items, total_amount, id}) => {
             </thead>
             <tbody>
 
-            ${items.map((row,index)=>{
-                total+= row.selling_price * row.invoice_item.quantity
+            ${invoiceItem.map((row,index)=>{
+                total+= row.item_id.selling_price * row.quantity
                 return `
                 <tr>
-                  <td class="service">${row.Name}</td>
+                  <td class="service">${row.item_id.Name}</td>
                   <td class="desc">Invoice item</td>
-                  <td class="unit">&#x20B9; ${row.selling_price}</td>
-                  <td class="qty">${row.invoice_item.quantity}</td>
-                  <td class="total">&#x20B9; ${ccyFormat(row.selling_price * row.invoice_item.quantity)}</td>
+                  <td class="unit">&#x20B9; ${row.item_id.selling_price}</td>
+                  <td class="qty">${row.quantity}</td>
+                  <td class="total">&#x20B9; ${ccyFormat(row.item_id.selling_price * row.quantity)}</td>
                 </tr>
                 `
             })}

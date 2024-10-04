@@ -37,7 +37,7 @@ export default function DashboardAppPage() {
   const GetPendingAmount = async() => {
     try{
         const res = await UserServices.PendingAmount();
-        setPendingAmount(res.data);
+        setPendingAmount(res.data.totalAmount);
     }
     catch(error){
       console.warn(error);
@@ -49,7 +49,7 @@ export default function DashboardAppPage() {
   const GetEstimatedProfit = async() => {
     try{
         const res = await UserServices.EstimatedProfit();
-        setEstimatedProfit(res.data);
+        setEstimatedProfit(res.data.totalEstimatedProfit);
     }
     catch(error){
       console.warn(error);
@@ -61,7 +61,7 @@ export default function DashboardAppPage() {
   const GetMonthlySales = async() => {
     try{
         const res = await UserServices.MonthlySales();
-        setMonthlySales(res.data);
+        setMonthlySales(res.data.totalMonthlysales);
     }
     catch(error){
       console.warn(error);
@@ -73,7 +73,7 @@ export default function DashboardAppPage() {
   const GetTotalCustomers = async() => {
     try{
         const res = await UserServices.TotalCustomers();
-        setTotalCustomers(res.data);
+        setTotalCustomers(res.data.totalCustomer);
     }
     catch(error){
       console.warn(error);

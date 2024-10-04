@@ -130,7 +130,7 @@ export default function ItemList({ openFilter, onOpenFilter, onCloseFilter, prod
 
                 </Box>
                 <Box>
-                <Button variant="outlined" name="item_id" onClick={()=>{handleButtonClick(row.Name,row.id,row.selling_price);}}>
+                <Button variant="outlined" name="item_id" onClick={()=>{handleButtonClick(row.Name,row._id,row.selling_price);}}>
                     {t('Add Item')}
                 </Button>
                 </Box>
