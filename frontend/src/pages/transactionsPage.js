@@ -34,7 +34,7 @@ export default function TransactionPage() {
     const {t} = useTranslation();
 
     const location = useLocation();
-    const customer_id = location.state.id;
+    const customer_id = location.state._id;
     const [customerName, setCustomerName] = useState(''); 
     const [data, setData] = useState('');
 
