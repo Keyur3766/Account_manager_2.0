@@ -1,31 +1,9 @@
-//Used for validation in Node.js
-const Joi = require("joi");
-const pdf = require("html-pdf");
 const fs = require('fs')
 // const puppeteer = require('puppeteer');
 const pdfTemplate = require("../documents/InvoiceTemplate/index");
-const db = require("../models");
-const path = require("path");
 const InvoiceModel = require("../models/Invoice.modal");
-const mongoose = require("mongoose");
 const puppeteer = require("puppeteer");
 
-
-const Customer = db.customer;
-const Invoice = db.Invoice;
-const Item = db.items;
-
-// const phantomPath = path.join(__dirname, '..','..','node_modules', 'phantomjs-2.1.1-macosx', 'bin','phantomjs');
-const phantomPath = path.join(
-  __dirname,
-  "..",
-  "phantomjs-2.1.1-macosx",
-  "bin",
-  "phantomjs"
-);
-var options = {
-  phantomPath: phantomPath,
-};
 
 exports.generateInvoice = async (req, res) => {
   try {
@@ -78,7 +56,12 @@ exports.generateInvoice = async (req, res) => {
 // }
 
 async function GenerateInvoicePDF(input, filePath) {
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch({ executablePath: process.env.PUPPETEER_EXECUTABLE_PATH , 
+    headless: "new", args: ['--no-sandbox'], });
+
+  /* without docker configuration
+  const browser = await puppeteer.launch({  
+    headless: "new"}); */
   const page = await browser.newPage();
 
   const reportHTML = pdfTemplate(input);

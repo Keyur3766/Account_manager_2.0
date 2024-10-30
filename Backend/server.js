@@ -1,7 +1,6 @@
 //importing modules
 const express = require('express')
 const bodyParser = require("body-parser");
-const sequelize = require('sequelize')
 const dotenv = require('dotenv').config()
 const cors = require("cors");
 const cookieParser = require("cookie-parser")
@@ -34,13 +33,6 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const db = require("./app/models");
-// db.sequelize.sync();
-
-// synchronizing the database and forcing it to false so we dont lose data
-// db.sequelize.sync({ force: true }).then(() => {
-//     console.log("db has been re sync");
-// });
 app.use("/api/customers/", customerRoutes);
 app.use("/api/suppliers/",supplierRoutes);
 app.use("/api/items/",itemRoutes);

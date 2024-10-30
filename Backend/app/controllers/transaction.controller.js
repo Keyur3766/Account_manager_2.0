@@ -1,21 +1,8 @@
-const Joi = require("joi"); 
-
-const db = require("../models");
 const Transaction = require("../models/transaction.modal");
 const mongoose = require("mongoose");
-const Sequelize = require('sequelize');
-const Transactions = db.Transaction;
+
 
 exports.AddTransaction = async(req,res) => {
-    // await Transactions.create(transaction)
-    // .then((data)=>{
-    //     res.send(data);
-    // })
-    // .catch((err)=>{
-    //     res.status(500).send({
-    //         message: err.message || "some error occured while adding transaction"
-    //     });
-    // });
     const transaction = {
         customer_id: req.body.customer_id,
         amount: req.body.amount,

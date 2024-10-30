@@ -131,7 +131,7 @@ export default function LoginForm() {
           Login
         </LoadingButton>
 
-        <Button variant="outlined" sx={{mt:2}} onClick={handleSignInGuest}>Signin as a Guest</Button>
+        <Button variant="outlined" sx={{mt:2}} onClick={handleSignInGuest}>Login as a Guest</Button>
       {/* </CardActions> */}
     </>
   );

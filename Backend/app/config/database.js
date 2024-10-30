@@ -31,7 +31,8 @@ const connect = async() => {
         console.log(`Successfully Connected to Database. DB Host: ${connectionInstance.connection.host}`);
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.log('Unable to establish connection to Database');
+        console.log(`${mongoConnectionString}`);
+        console.log(`Unable to establish connection to Database: ${err}`);
         process.exit(1);
       }
 };

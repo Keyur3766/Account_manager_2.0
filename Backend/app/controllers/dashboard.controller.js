@@ -1,13 +1,7 @@
 
-const db = require("../models");
 const Challan = require("../models/challans.modal");
 const Invoice = require("../models/Invoice.modal");
 const Customer = require("../models/customer.modal");
-const mongoose = require("mongoose");
-const { sequelize, Sequelize } = require('sequelize');
-
-// const Challan = db.challans;
-const Item = db.items;
 
 exports.PendingAmounts = async(req,res) => {
     const pendingAmount = await Challan.aggregate([

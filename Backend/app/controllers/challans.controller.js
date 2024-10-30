@@ -254,7 +254,14 @@ exports.GenerateChallanPDF = async(req,res) => {
 
 
 async function GenerateChallanPDFFromTemplate(inputData, filePath) {
-    const browser = await puppeteer.launch({ headless: "new" });
+    const browser = await puppeteer.launch({ 
+        executablePath: '/usr/bin/chromium', 
+        headless: "new", args: ['--no-sandbox'],
+     });
+
+     /* without docker configuration
+    const browser = await puppeteer.launch({  
+        headless: "new"}); */
     const page = await browser.newPage();
     console.log(inputData);
     const reportHTML = pdfTemplate(inputData);
